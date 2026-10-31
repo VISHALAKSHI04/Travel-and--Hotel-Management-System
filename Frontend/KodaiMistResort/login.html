@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Customer Login | KODAI MIST</title>
+<link rel="stylesheet" href="pro-theme.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="index.html"><span>KODAI</span> MIST</a>
+  <nav class="main-nav">
+    <a href="index.html">Home</a>
+    <a href="rooms.html">Rooms</a>
+    <a href="user.html">Create Account</a>
+    <a href="admin-login.html">Admin</a>
+  </nav>
+</header>
+
+<section class="service-wrap" style="min-height:75vh;display:flex;align-items:center;justify-content:center">
+  <div class="glass-card" style="max-width:520px;width:100%">
+    <div class="section-kicker">CUSTOMER / CLIENT</div>
+    <h1>Customer Login</h1>
+
+    <form id="loginForm">
+      <label>Email
+        <input id="loginEmail" type="email" required>
+      </label>
+
+      <label>Password
+        <input id="loginPassword" type="password" required>
+      </label>
+
+      <button class="primary" id="loginButton" type="submit">
+        Login & Continue →
+      </button>
+
+      <p id="msg" class="muted"></p>
+    </form>
+
+    <p class="muted">New customer?
+      <a href="user.html">Create account</a>
+    </p>
+  </div>
+</section>
+
+<script>
+const API_BASE = "http://localhost:8080";
+
+const loginForm = document.getElementById("loginForm");
+const loginEmail = document.getElementById("loginEmail");
+const loginPassword = document.getElementById("loginPassword");
+const loginButton = document.getElementById("loginButton");
+const msg = document.getElementById("msg");
+
+loginForm.addEventListener("submit", async function (event) {
+  event.preventDefault();
+
+  loginButton.disabled = true;
+  msg.textContent = "Checking User API...";
+
+  try {
+    const response = await fetch(API_BASE + "/api/users", {
+      method: "GET",
+      headers: { "Accept": "application/json" }
+    });
+
+    const text = await response.text();
+
+    let data;
+    try {
+      data = text ? JSON.parse(text) : [];
+    } catch (_) {
+      throw new Error(text || ("HTTP " + response.status));
+    }
+
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status + ": " + text);
+    }
+
+    const users = Array.isArray(data) ? data : [data];
+
+    const user = users.find(function (item) {
+      return String(item.email || "").toLowerCase() ===
+             loginEmail.value.trim().toLowerCase()
+        && String(item.password || "") === loginPassword.value;
+    });
+
+    if (!user) {
+      msg.textContent = "Invalid email or password.";
+      return;
+    }
+
+    sessionStorage.setItem("loggedInUser", JSON.stringify(user));
+    sessionStorage.setItem("role", "customer");
+
+    window.location.href = "booking.html";
+
+  } catch (error) {
+    msg.textContent = "Login failed: " + error.message;
+  } finally {
+    loginButton.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

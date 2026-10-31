@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KODAI MIST API Test</title>
+<style>
+body{font-family:Arial,sans-serif;padding:30px;max-width:900px;margin:auto}
+button{padding:10px 16px;margin:5px}
+pre{background:#f4f4f4;padding:15px;white-space:pre-wrap}
+.ok{color:green}.bad{color:red}
+</style>
+</head>
+<body>
+<h1>KODAI MIST API Test</h1>
+<p>Gateway: <b>http://localhost:8080</b></p>
+<button onclick="test('/api/users','GET')">GET Users</button>
+<button onclick="test('/api/bookings/pending','GET')">GET Pending Bookings</button>
+<pre id="result">Click a test button.</pre>
+<script>
+async function test(path, method) {
+  const result=document.getElementById("result");
+  result.textContent="Testing "+method+" "+path+"...";
+  try {
+    const r=await fetch("http://localhost:8080"+path,{method});
+    const t=await r.text();
+    result.textContent="HTTP "+r.status+"\n\n"+t;
+  } catch(e) {
+    result.textContent="Connection failed:\n"+e.message+
+      "\n\nMake sure Eureka + User/Booking services + API Gateway are running.";
+  }
+}
+</script>
+</body>
+</html>

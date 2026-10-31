@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Login | KODAI MIST</title>
+  <link rel="stylesheet" href="pro-theme.css">
+</head>
+<body>
+<section class="service-wrap" style="min-height:100vh;display:flex;align-items:center;justify-content:center">
+  <div class="glass-card" style="max-width:500px;width:100%">
+    <div class="section-kicker">KODAI MIST MANAGEMENT</div>
+    <h1>Admin Login</h1>
+    <p class="muted">Demo admin account for your project.</p>
+
+    <form id="adminLoginForm">
+      <label>Username
+        <input id="username" value="admin" required>
+      </label>
+      <label>Password
+        <input id="password" type="password" value="admin123" required>
+      </label>
+      <button class="primary" type="submit">Admin Login →</button>
+      <p id="message" class="muted"></p>
+    </form>
+
+    <p class="muted"><a href="login.html">← Customer Login</a></p>
+  </div>
+</section>
+
+<script>
+document.getElementById('adminLoginForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const message = document.getElementById('message');
+
+  if (username === 'admin' && password === 'admin123') {
+    sessionStorage.setItem('role', 'admin');
+    sessionStorage.removeItem('loggedInUser');
+    window.location.href = 'admin.html';
+  } else {
+    message.textContent = 'Invalid admin credentials.';
+  }
+});
+</script>
+</body>
+</html>

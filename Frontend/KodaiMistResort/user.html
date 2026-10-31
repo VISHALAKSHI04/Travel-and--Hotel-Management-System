@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Customer Registration | KODAI MIST</title>
+<link rel="stylesheet" href="pro-theme.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="index.html"><span>KODAI</span> MIST</a>
+  <nav class="main-nav">
+    <a href="index.html">Home</a>
+    <a href="rooms.html">Rooms</a>
+    <a href="login.html">Customer Login</a>
+    <a href="admin-login.html">Admin</a>
+  </nav>
+</header>
+
+<section class="service-wrap" style="min-height:75vh;display:flex;align-items:center;justify-content:center">
+  <div class="glass-card" style="max-width:560px;width:100%">
+    <div class="section-kicker">CUSTOMER ACCOUNT</div>
+    <h1>Create Account</h1>
+    <p class="muted">Create your customer account. After registration, login and book your room.</p>
+
+    <form id="registerForm">
+      <label>Full Name
+        <input id="name" name="name" type="text" required>
+      </label>
+
+      <label>Email
+        <input id="email" name="email" type="email" required>
+      </label>
+
+      <label>Phone
+        <input id="phone" name="phone" type="tel" required>
+      </label>
+
+      <label>Password
+        <input id="password" name="password" type="password" required>
+      </label>
+
+      <button class="primary" id="registerButton" type="submit">
+        Create Account →
+      </button>
+
+      <p id="msg" class="muted"></p>
+    </form>
+
+    <p class="muted">Already registered?
+      <a href="login.html">Customer Login</a>
+    </p>
+  </div>
+</section>
+
+<script>
+const API_BASE = "http://localhost:8080";
+
+const form = document.getElementById("registerForm");
+const msg = document.getElementById("msg");
+const button = document.getElementById("registerButton");
+
+form.addEventListener("submit", async function (event) {
+  event.preventDefault();
+
+  const payload = {
+    name: document.getElementById("name").value.trim(),
+    email: document.getElementById("email").value.trim(),
+    phone: document.getElementById("phone").value.trim(),
+    password: document.getElementById("password").value
+  };
+
+  if (!payload.name || !payload.email || !payload.phone || !payload.password) {
+    msg.textContent = "Please fill all fields.";
+    return;
+  }
+
+  button.disabled = true;
+  msg.textContent = "Creating account...";
+
+  try {
+    const response = await fetch(API_BASE + "/api/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const text = await response.text();
+
+    let data = {};
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (_) {
+      data = { message: text };
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.message || data.error || text || ("HTTP " + response.status)
+      );
+    }
+
+    msg.textContent = "Account created successfully. Redirecting to Customer Login...";
+    form.reset();
+
+    setTimeout(function () {
+      window.location.href = "login.html";
+    }, 800);
+
+  } catch (error) {
+    msg.textContent = "Registration failed: " + error.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

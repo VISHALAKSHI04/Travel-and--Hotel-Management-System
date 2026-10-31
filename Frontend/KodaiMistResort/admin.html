@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Dashboard | KODAI MIST</title>
+  <link rel="stylesheet" href="pro-theme.css">
+</head>
+<body>
+<header class="site-header">
+  <a class="brand" href="index.html"><span>KODAI</span> MIST</a>
+  <nav class="main-nav">
+    <a href="admin.html">Admin Dashboard</a>
+    <a href="login.html">Customer</a>
+    <a href="#" onclick="logout(); return false;">Logout</a>
+  </nav>
+</header>
+
+<section class="service-wrap">
+  <div class="service-grid">
+    <div class="glass-card">
+      <div class="section-kicker">ADMIN</div>
+      <h1>Booking Requests</h1>
+      <p class="muted">Customer booking requests from Booking Service.</p>
+      <button class="primary" id="refreshButton">Refresh Pending ↻</button>
+      <div id="list" style="margin-top:20px"></div>
+    </div>
+
+    <div class="dark-card">
+      <div class="section-kicker light">RESPONSE</div>
+      <h3>How this works</h3>
+      <p>Customer creates account → customer logs in → booking goes to PENDING → admin confirms/rejects → notification is created for that customer.</p>
+      <pre id="log">Ready...</pre>
+    </div>
+  </div>
+</section>
+
+<script>
+const API_BASE = 'http://localhost:8080';
+const list = document.getElementById('list');
+const log = document.getElementById('log');
+
+if (sessionStorage.getItem('role') !== 'admin') {
+  window.location.href = 'admin-login.html';
+}
+
+async function loadPending() {
+  list.innerHTML = '<p>Loading bookings...</p>';
+
+  try {
+    const response = await fetch(API_BASE + '/api/bookings/pending');
+
+    if (!response.ok) {
+      throw new Error('HTTP ' + response.status);
+    }
+
+    const data = await response.json();
+    const bookings = Array.isArray(data) ? data : [data];
+
+    if (bookings.length === 0) {
+      list.innerHTML = '<p>No pending bookings.</p>';
+      return;
+    }
+
+    list.innerHTML = bookings.map(function (b) {
+      return `
+        <div class="glass-card" style="margin:15px 0">
+          <h3>Booking #${b.id}</h3>
+          <p>Customer: ${b.guestName || ''} | ${b.guestEmail || ''}</p>
+          <p>User ID: ${b.userId} | Hotel: ${b.hotelId} | Room: ${b.roomId}</p>
+          <p>${b.checkIn} → ${b.checkOut} | Status: <b>${b.status}</b></p>
+          <button class="primary" onclick="decision(${b.id}, ${b.userId}, 'confirm')">Confirm</button>
+          <button onclick="decision(${b.id}, ${b.userId}, 'reject')">Reject</button>
+        </div>`;
+    }).join('');
+  } catch (error) {
+    list.innerHTML = '<p>Booking API failed: ' + error.message + '</p>';
+  }
+}
+
+async function decision(id, userId, action) {
+  try {
+    const response = await fetch(
+      API_BASE + '/api/bookings/' + id + '/' + action,
+      { method: 'PUT' }
+    );
+
+    let data = {};
+    try { data = await response.json(); } catch (_) {}
+
+    if (!response.ok) {
+      throw new Error(data.message || 'HTTP ' + response.status);
+    }
+
+    const message = action === 'confirm'
+      ? 'Your hotel booking is confirmed.'
+      : 'Your hotel booking was rejected.';
+
+    const notificationResponse = await fetch(
+      API_BASE + '/api/notifications',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userId,
+          message: message,
+          type: 'BOOKING'
+        })
+      }
+    );
+
+    if (!notificationResponse.ok) {
+      throw new Error(
+        'Booking updated, but notification API failed: HTTP ' + notificationResponse.status
+      );
+    }
+
+    log.textContent =
+      'Booking #' + id + ' ' + action.toUpperCase() +
+      ' and notification sent to user ' + userId + '.';
+
+    await loadPending();
+  } catch (error) {
+    log.textContent = 'Action failed: ' + error.message;
+  }
+}
+
+function logout() {
+  sessionStorage.clear();
+  window.location.href = 'admin-login.html';
+}
+
+document.getElementById('refreshButton').addEventListener('click', loadPending);
+loadPending();
+</script>
+</body>
+</html>
